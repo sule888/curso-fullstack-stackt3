@@ -1,0 +1,12 @@
+Directorio:
+
+    - Prisma: definicion de modeos y gestiona las acciones en la db 
+    - src/app: frontend 
+    - src/server: backend
+
+
+
+src/server: 
+    - api/routers: cada archivo que contiene es una api 
+        - example.ts: es un api por cada modelo de prisma o tabla de la db que contiene endpoints: acciones crud 
+    - api/root.ts: en el objeto createTRPCRouter contiene todas las apis que haya hecho que quiera que las use el cliente

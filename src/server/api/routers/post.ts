@@ -6,6 +6,9 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 
+// ! ejemplo de api, cada api tiene endpoints (crud) que se heredan hacia el front cuando la agrego en
+// ! server/api/root.ts
+//Aqui definire cada accion crud que quiera en una tabla, es un archivo de estos por cada tabla (modelo en prisma) que tenga
 export const postRouter = createTRPCRouter({
   hello: publicProcedure
     .input(z.object({ text: z.string() }))
@@ -17,6 +20,7 @@ export const postRouter = createTRPCRouter({
 
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1) }))
+    // * .mutation: mutation modifica base de datos crud
     .mutation(async ({ ctx, input }) => {
       return ctx.db.post.create({
         data: {

@@ -1,4 +1,5 @@
-import { z } from "zod";``
+import { z } from "zod";
+``;
 import { todoInput } from "@/types";
 import {
   createTRPCRouter,
@@ -44,7 +45,7 @@ export const todoRouter = createTRPCRouter({
         },
       });
     }),
-  update: protectedProcedure
+  toggle: protectedProcedure
     .input(
       z.object({
         id: z.string(),

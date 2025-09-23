@@ -9,6 +9,30 @@ export default function CreateTodo() {
   const trpc = api.useUtils();
 
   const { mutate } = api.todo.create.useMutation({
+    onMutate: async () => {
+      // cancela todo lo saliente para que no sobreescriba la actualizacion optimizada
+      // optimizacion para actualizar el endopoint all inmediatamente al hacer algun cambio en toggle o delete,
+      await trpc.todo.all.cancel();
+
+      const previosuTodos = trpc.todo.all.getData();
+      trpc.todo.all.setData(undefined, (prev) => {
+        const optimisticTodo = {
+          id: "optcm-todo",
+          done: false,
+          text: newTodo,
+        };
+        if (!prev) return [optimisticTodo];
+        return [...prev, optimisticTodo];
+      });
+      setNewTodo("");
+      return { previosuTodos };
+    },
+    //manejo de errores de backend
+    onError: (err, newTodo, context) => {
+      toast.error("Ocurrio un error al creat un Todo");
+      setNewTodo(newTodo);
+      trpc.todo.all.setData(undefined, () => context?.previosuTodos);
+    },
     onSettled: async () => {
       await trpc.todo.all.invalidate();
     },

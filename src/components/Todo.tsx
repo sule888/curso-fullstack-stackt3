@@ -1,6 +1,7 @@
 import type { Todo } from "../types";
 //Hacemos la conexion directo para los endponits toggle y delete
 import { api } from "@/trpc/react";
+import { toast } from "react-hot-toast";
 // ya hice la conexion con trpc con el backend en el archivo types, ya solo lo paso como props
 type TodoProps = {
   todo: Todo;
@@ -11,12 +12,58 @@ export default function Todo({ todo }: TodoProps) {
   const trpc = api.useUtils();
   // conexion de toggle
   const { mutate: doneMutation } = api.todo.toggle.useMutation({
+    onMutate: async ({ id, done }) => {
+      await trpc.todo.all.cancel();
+
+      const previosuTodos = trpc.todo.all.getData();
+      trpc.todo.all.setData(undefined, (prev) => {
+        if (!prev) return previosuTodos;
+        return prev.map((t) => {
+          if (t.id === id) {
+            return {
+              ...t,
+              done,
+            };
+          }
+          return t;
+        });
+      });
+      return { previosuTodos };
+    },
+    onSuccess: (errr, { done }) => {
+      if (done) {
+        toast.success("Todos completados");
+      }
+    },
+    //manejo de errores de backend
+    onError: (err, newTodo, context) => {
+      toast.error(`Ocurrio un error al ${done ? "done" : "undone"} un Todo`);
+
+      trpc.todo.all.setData(undefined, () => context?.previosuTodos);
+    },
     onSettled: async () => {
       await trpc.todo.all.invalidate();
     },
   });
+
   //conecxion de delete
   const { mutate: deleteMutation } = api.todo.delete.useMutation({
+    onMutate: async (deleteId) => {
+      await trpc.todo.all.cancel();
+
+      const previosuTodos = trpc.todo.all.getData();
+
+      trpc.todo.all.setData(undefined, (prev) => {
+        if (!prev) return previosuTodos;
+        return prev.filter((t) => t.id !== deleteId);
+      });
+      return { previosuTodos };
+    },
+    //manejo de errores de backend
+    onError: (err, newTodo, context) => {
+      toast.error("Ocurrio un error al eliminar un Todo");
+      trpc.todo.all.setData(undefined, () => context?.previosuTodos);
+    },
     onSettled: async () => {
       await trpc.todo.all.invalidate();
     },
@@ -36,7 +83,10 @@ export default function Todo({ todo }: TodoProps) {
               doneMutation({ id, done: e.target.checked });
             }}
           />
-          <label htmlFor="done" className={`cursor-pointer`}>
+          <label
+            htmlFor="done"
+            className={`cursor-pointer ${done ? "line-through" : ""}`}
+          >
             {text}
           </label>
         </div>

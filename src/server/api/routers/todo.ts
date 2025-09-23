@@ -7,6 +7,7 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 import { connect } from "http2";
+import { TRPCError } from "@trpc/server";
 
 export const todoRouter = createTRPCRouter({
   all: protectedProcedure.query(async ({ ctx }) => {
@@ -22,6 +23,8 @@ export const todoRouter = createTRPCRouter({
   create: protectedProcedure
     .input(todoInput)
     .mutation(async ({ ctx, input }) => {
+      //LINEA PARA testear manejo de erroes del server
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       return ctx.db.todo.create({
         // hasta aqui nos da error de que necesita conectarse user,ya que lo llamamos en nuestro modelo
         data: {
